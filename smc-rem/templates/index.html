@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>React Tutorial</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.0/react.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.0/react-dom.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.20/require.js"></script>
+  </head>
+  <body>
+    <div id="content"></div>
+    <!--- <script type="text/babel" src="scripts/example.js"></script> --->
+    <script type="text/babel">
+      var Recommendation = React.createClass({displayName: 'Recommendation',
+        render: function() {
+          return (
+            <div className="recommendation" key={this.props.key}>
+              <h2>Recommendation -</h2>
+              <b>School:</b> {this.props.data.school} <br />
+              <b>Club:</b> {this.props.data.club} <br />
+              <b>Item:</b> {this.props.data.item} <br />
+              <b>Reason:</b> {this.props.data.reason} <br />
+              <b>Price:</b> ${this.props.data.price} <br />
+              <b>Slug:</b> {this.props.data.slug}
+            </div>
+          );
+        }
+      });
+
+      var RecommendationList = React.createClass({
+        getInitialState: function() {
+          return {data: []};
+                         //{'email': this.props.email,
+                         //'weight_school': this.props.weight_school,
+                         //'weight_type': this.props.weight_type,
+                         //'weight_text': this.props.weight_text}};
+        },
+        componentDidMount: function() {
+          console.log(this.props.url);
+          $.ajax({
+            url: this.props.url,
+            dataType: 'json',
+            cache: false,
+            success: function(data) {
+              this.setState({data: data});
+            }.bind(this),
+            error: function(xhr, status, err) {
+              console.error(this.props.url, status, err.toString());
+            }.bind(this)
+          });
+        },
+        render: function() {
+          var recommendationNodes = this.state.data.map(function (recommendation, i) {
+            return (
+              <Recommendation data={recommendation} key={i} />
+            );
+          });
+          return (
+            <div className="recommendationList">
+              {recommendationNodes}
+            </div>
+          );
+        }
+      });
+
+      var RecommendationListControl = React.createClass({
+        getInitialState: function() {
+          return {'email': 'beth.shindler@gmail.com', 'school_weight': 1,
+                  'type_weight': 1, 'text_weight': 1};
+        },
+        render: function() {
+          var email = {value: this.state.email, requestChange: this.onEmailChange};
+          var school_weight = {value: this.state.school_weight, requestChange: this.onSchoolWeightChange};
+          var type_weight = {value: this.state.type_weight, requestChange: this.onTypeWeightChange};
+          var text_weight = {value: this.state.text_weight, requestChange: this.onTextWeightChange};
+          this.state.url = 'http://127.0.0.1:5000/recommendations?email=' +
+                this.state['email'] + '&school_weight=' +
+                this.state['school_weight'] +
+                '&type_weight=' + this.state['type_weight'] +
+                '&text_weight=' + this.state['text_weight'];
+          console.log(this.state.school_weight);
+          return (
+            <div>
+              <form>
+                <input type='text' valueLink={email} />
+                <input type='number' valueLink={school_weight} step='0.1' />
+                <input type='number' valueLink={type_weight} step='0.1' />
+                <input type='number' valueLink={text_weight} step='0.1' />
+              </form>
+              <RecommendationList url={this.state.url} key={this.state.url}/>
+            </div>
+          );
+        },
+        onEmailChange: function(data) {
+          this.setState({'email': data});
+        },
+        onSchoolWeightChange: function(data) {
+          this.setState({'school_weight': data})
+        },
+        onTypeWeightChange: function(data) {
+          this.setState({'type_weight': data})
+        },
+        onTextWeightChange: function(data) {
+          this.setState({'text_weight': data})
+        }
+      });
+
+      ReactDOM.render(
+        <RecommendationListControl />,
+        document.getElementById('content')
+      );
+    </script>
+  </body>
+</html>

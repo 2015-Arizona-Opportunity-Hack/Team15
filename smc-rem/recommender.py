@@ -18,7 +18,7 @@ def body2text(x):
 
 
 def why_select(bodytxt):
-    res = re.search('why:(.*)', bodytxt, re.IGNORECASE)
+    res = re.search('why:(.*)', bodytxt, re.IGNORECASE | re.DOTALL)
     return '' if res is None else res.group(1).strip(' \t\n*')
 
 
@@ -122,6 +122,8 @@ def get_recommendation(email, topN=10, school_weight=1, type_weight=1,
                        text_weight=1):
     prev_orders = orders_plus[orders_plus['Email'] == email]
     n_prev_orders = len(prev_orders.index)
+    if n_prev_orders < 1:
+        return None
     prev_indices = prev_orders['IntIndex'].values
     avg_order = np.sum(x[prev_orders['IntIndex']], axis=0) / \
         (1.0 * n_prev_orders)

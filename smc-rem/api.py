@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, render_template
 from flask_restful import Api, Resource, fields, marshal_with, reqparse
 
 from recommender import get_recommendation
@@ -6,6 +6,11 @@ from recommender import get_recommendation
 
 app = Flask(__name__)
 api = Api(app)
+
+
+@app.route('/')
+def index():
+    return render_template('index.html')
 
 rec_fields = {
     'slug': fields.String(attribute='Handle'),
@@ -16,9 +21,7 @@ rec_fields = {
     'price': fields.Integer(attribute='Variant Price')
 }
 
-recs_fields = {
-    'recs': fields.List(fields.Nested(rec_fields))
-}
+# recs_fields = fields.List(fields.Nested(rec_fields))
 
 
 # class RecommendationDao(object):
@@ -44,7 +47,7 @@ parser.add_argument('text_weight', default=1, type=float,
 
 
 class Recommendations(Resource):
-    @marshal_with(recs_fields)
+    @marshal_with(rec_fields)
     def get(self):
         args = parser.parse_args()
         email = args['email']
@@ -54,10 +57,12 @@ class Recommendations(Resource):
         text_w = args['text_weight']
         recs = get_recommendation(email=email, topN=topN, school_weight=schl_w,
                                   type_weight=type_w, text_weight=text_w)
+        if recs is None:
+            return []
         recs_list = [recs.iloc[idx] for idx in range(topN)]
-        return {'recs': recs_list}
+        return recs_list
 
-api.add_resource(Recommendations, '/recommendation')
+api.add_resource(Recommendations, '/recommendations')
 
 if __name__ == '__main__':
     app.run(debug=True)
