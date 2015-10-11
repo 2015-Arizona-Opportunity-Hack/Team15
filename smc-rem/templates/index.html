@@ -3,16 +3,23 @@
   <head>
     <meta charset="utf-8" />
     <title>React Tutorial</title>
+    <!--<script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.20/require.js"></script>--->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.0/react.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/react/0.14.0/react-dom.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-core/5.8.23/browser.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/require.js/2.1.20/require.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/fixed-data-table/0.4.7/fixed-data-table.js"></script>
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/fixed-data-table/0.4.7/fixed-data-table.css">
   </head>
   <body>
     <div id="content"></div>
-    <!--- <script type="text/babel" src="scripts/example.js"></script> --->
+    <!---<script type="text/babel" src="static/js/app.js"></script>--->
     <script type="text/babel">
+      //var FixedDataTable = require('fixed-data-table');
+      //var React = require('react');
+      var Table = FixedDataTable.Table;
+      var Column = FixedDataTable.Column;
+    
       var Recommendation = React.createClass({displayName: 'Recommendation',
         render: function() {
           return (
@@ -28,14 +35,19 @@
           );
         }
       });
-
+    
+      var columns = ['school', 'club', 'item', 'reason', 'price', 'slug']
       var RecommendationList = React.createClass({
         getInitialState: function() {
           return {data: []};
-                         //{'email': this.props.email,
-                         //'weight_school': this.props.weight_school,
-                         //'weight_type': this.props.weight_type,
-                         //'weight_text': this.props.weight_text}};
+        },
+        rowGetter: function(rowIndex) {
+          var row_obj = this.state.data[rowIndex];
+          var row_arr = new Array();
+          for(var i = 0; i < columns.length; i++) {
+            row_arr[i] = row_obj[columns[i]];
+          }
+          return row_arr;
         },
         componentDidMount: function() {
           console.log(this.props.url);
@@ -52,19 +64,57 @@
           });
         },
         render: function() {
-          var recommendationNodes = this.state.data.map(function (recommendation, i) {
-            return (
-              <Recommendation data={recommendation} key={i} />
-            );
-          });
+          //var recommendationNodes = this.state.data.map(function (recommendation, i) {
+          //  return (
+          //    <Recommendation data={recommendation} key={i} />
+          //  );
+          //});
           return (
-            <div className="recommendationList">
-              {recommendationNodes}
-            </div>
+            <Table
+              rowHeight={60}
+              rowGetter={this.rowGetter}
+              rowsCount={this.state.data.length}
+              width={900}
+              height={2000}
+              headerHeight={30}>
+              <Column
+                label='School'
+                width={100}
+                dataKey={0}
+              />
+              <Column
+                label='Club'
+                width={115}
+                dataKey={1}
+              />
+              <Column
+                label='Item'
+                width={150}
+                dataKey={2}
+              />
+              <Column
+                label='Reason'
+                width={250}
+                dataKey={3}
+              />
+              <Column
+                label='Price'
+                width={50}
+                dataKey={4}
+              />
+              <Column
+                label='Slug'
+                width={150}
+                dataKey={5}
+              />
+            </Table>
+            //<div className="recommendationList">
+            //  {recommendationNodes}
+            //</div>
           );
         }
       });
-
+    
       var RecommendationListControl = React.createClass({
         getInitialState: function() {
           return {'email': 'beth.shindler@gmail.com', 'school_weight': 1,
@@ -106,7 +156,7 @@
           this.setState({'text_weight': data})
         }
       });
-
+    
       ReactDOM.render(
         <RecommendationListControl />,
         document.getElementById('content')

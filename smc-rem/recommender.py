@@ -23,12 +23,15 @@ def why_select(bodytxt):
 
 
 def club_select(tags):
-    clubs = {'basketball',
+    clubs = {'art club',
+             'basketball',
              'dance',
              'fashion club'
              'golf',
+             'robotics',
              'soccer',
              'softball',
+             'student council',
              'track and field'
              }
     tags = set([tag.strip() for tag in tags.lower().split(',')])
@@ -53,6 +56,8 @@ item_orders = orders[~pandas.isnull(orders['SKU'])]
 # such as recurring donations
 orders_plus = pandas.merge(item_orders, products, on='SKU', how='inner',
                            suffixes=('.o', '.p'))
+lower_strip = lambda x: x.lower().strip()
+orders_plus['CanonEmail'] = orders_plus['Email'].apply(lower_strip)
 # Inner join orders_plus with customers, so we do not keep orders without a
 # matching customer
 orders_plus = pandas.merge(orders_plus, customers, on='Email', how='inner',
@@ -118,15 +123,35 @@ text_cols = range(text_offset, text_offset + text_n)
 x = np.hstack((x_school, x_type, x_text))
 
 
+def get_customers():
+    orders_plus['total_price'] = orders_plus['Lineitem price'] * \
+        orders_plus['Lineitem quantity']
+    cgroups = orders_plus.groupby('Email')
+    df = pandas.DataFrame(data={'total_orders': cgroups.size()})
+    df['total_spent'] = cgroups['total_price'].agg({'total_spent': np.sum})
+    df['email'] = cgroups['Email'].agg({'email': lambda g: g.iloc[0]})
+    df['city'] = cgroups['City'].agg({'city': lambda g: g.iloc[0]})
+    return df
+
+
+def get_orders(email):
+    email = email.lower().strip()
+    prev_orders = orders_plus[orders_plus['CanonEmail'] == email]
+    return prev_orders
+
+
 def get_recommendation(email, topN=10, school_weight=1, type_weight=1,
                        text_weight=1):
-    prev_orders = orders_plus[orders_plus['Email'] == email]
+    prev_orders = get_orders(email)
     n_prev_orders = len(prev_orders.index)
     if n_prev_orders < 1:
         return None
     prev_indices = prev_orders['IntIndex'].values
-    avg_order = np.sum(x[prev_orders['IntIndex']], axis=0) / \
-        (1.0 * n_prev_orders)
+    if n_prev_orders == 1:
+        avg_order = x[prev_orders['IntIndex']]
+    else:
+        avg_order = np.sum(x[prev_orders['IntIndex']], axis=0) / \
+            (1.0 * n_prev_orders)
     query = np.concatenate((avg_order[school_cols] * school_weight,
                             avg_order[type_cols] * type_weight,
                             avg_order[text_cols] * text_weight))
@@ -135,4 +160,6 @@ def get_recommendation(email, topN=10, school_weight=1, type_weight=1,
     # recs = recs.loc[:, ('Handle', 'Vendor', 'Reason', 'Club',
     #                     'Variant Inventory Qty', 'Variant Price')]
     return recs
+
+
 

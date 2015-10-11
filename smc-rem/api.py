@@ -1,7 +1,7 @@
 from flask import Flask, render_template
 from flask_restful import Api, Resource, fields, marshal_with, reqparse
 
-from recommender import get_recommendation
+from recommender import get_customers, get_recommendation
 
 
 app = Flask(__name__)
@@ -12,6 +12,13 @@ api = Api(app)
 def index():
     return render_template('index.html')
 
+customer_fields = {
+    'email': fields.String(attribute='Email'),
+    'total_spent': fields.Integer(attribute='Total Spent'),
+    'total_orders': fields.Integer(attribute='Total Orders'),
+    'city': fields.String(attribute='City')
+}
+
 rec_fields = {
     'slug': fields.String(attribute='Handle'),
     'school': fields.String(attribute='Vendor'),
@@ -20,18 +27,6 @@ rec_fields = {
     'reason': fields.String(attribute='Reason'),
     'price': fields.Integer(attribute='Variant Price')
 }
-
-# recs_fields = fields.List(fields.Nested(rec_fields))
-
-
-# class RecommendationDao(object):
-#     def __init__(self, slug, school, club, item, reason, price):
-#         self.slug = slug
-#         self.school = school
-#         self.club = club
-#         self.item = item
-#         self.reason = reason
-#         self.price = price
 
 
 parser = reqparse.RequestParser()
@@ -44,6 +39,12 @@ parser.add_argument('type_weight', default=1, type=float,
                     help='Weight to apply to type matching')
 parser.add_argument('text_weight', default=1, type=float,
                     help='Weight to apply to text matching')
+
+
+class Customers(Resource):
+    @marshal_with(customer_fields)
+    def get(self):
+        get_customers()
 
 
 class Recommendations(Resource):
@@ -62,6 +63,8 @@ class Recommendations(Resource):
         recs_list = [recs.iloc[idx] for idx in range(topN)]
         return recs_list
 
+
+api.add_resource(Customers, '/customers')
 api.add_resource(Recommendations, '/recommendations')
 
 if __name__ == '__main__':
